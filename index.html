@@ -104,7 +104,6 @@ tr:hover td{background:#f8f9fa}
     <button class="tab" onclick="switchTab('painel')">📋 Painel Geral - Layout de vendas</button>
   </div>
 
-  <!-- ABA CONSULTA -->
   <div id="tab-consulta" class="section active">
     <div class="card">
       <h2>Buscar lotes</h2>
@@ -141,7 +140,6 @@ tr:hover td{background:#f8f9fa}
     <div id="consulta-result"></div>
   </div>
 
-  <!-- ABA CONCILIAÇÃO SAP -->
   <div id="tab-contab" class="section">
     <div class="card">
       <h2>Conciliação SAP Revenue</h2>
@@ -165,16 +163,15 @@ tr:hover td{background:#f8f9fa}
     <div id="contab-result"></div>
   </div>
 
-  <!-- ABA PAINEL -->
   <div id="tab-painel" class="section">
     <div class="card">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
         <input type="text" id="filtro-txt" placeholder="Filtrar por lote, site, status..." style="flex:1;min-width:180px;font-size:13px" oninput="aplicarFiltros()">
-        <select id="filtro-status" onchange="aplicarFiltros()" style="font-size:13px">><option value="">Todos os status</option></select>
+        <select id="filtro-status" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os status</option></select>
         <select id="filtro-site" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os sites</option></select>
         <select id="filtro-mes" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os meses</option></select>
         <select id="filtro-ano" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os anos</option></select>
-        <button class="btn" style="margin:0" onclick="carregarPainel()">↻ Atualizar</button>
+        <button class="btn" style="margin:0" onclick="inicializar()">↻ Atualizar</button>
         <button class="btn-outline" id="btn-exportar-painel" style="display:none" onclick="exportarCSVPainel()">⬇️ Exportar CSV</button>
       </div>
       <div id="counter-row" class="counter-row"></div>
@@ -186,29 +183,31 @@ tr:hover td{background:#f8f9fa}
 
 <div class="footer-label">Mercado Livre — Team Controlling</div>
 
+<script id="dados-script" type="application/json">
+{{ $json.dados }}
+</script>
+
 <script>
-const SHEET_ID = '1eVAgQJtutfz_5e38HuuehDo-eEwX1ALKfWjwY9n7GNk';
-const ABA = 'Datos';
-const API_KEY = 'AIzaSyDEIxAVhw6drlTp64PqygTsmNvk8zM0ADc';
+var todosLotes = [], filtrados = [], _ultimaConsulta = null;
 
-var todosLotes = [], filtrados = [], _ultimaConsulta = null, _divs = [];
-
-async function fetchSheetData() {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ABA)}?key=${API_KEY}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('Erro ao acessar planilha: ' + r.status);
-  const d = await r.json();
-  if (!d.values || d.values.length < 2) return [];
-  const headers = d.values[0].map(h => String(h).trim().toUpperCase());
-  return d.values.slice(1).map(row => {
-    const obj = {};
-    headers.forEach((h, i) => {
-      let val = String(row[i] || '').trim();
-      if (h.includes('FECHA') || h.includes('MES') || h.includes('DATE')) val = formatarData(val);
-      obj[h] = val;
+function carregarDados() {
+  try {
+    const raw = document.getElementById('dados-script').textContent.trim();
+    const arr = JSON.parse(raw);
+    return arr.map(item => {
+      const obj = {};
+      Object.keys(item).forEach(k => {
+        let val = String(item[k] || '').trim();
+        const ku = k.toUpperCase();
+        if (ku.includes('FECHA') || ku.includes('MES') || ku.includes('DATE')) val = formatarData(val);
+        obj[ku] = val;
+      });
+      return obj;
     });
-    return obj;
-  });
+  } catch(e) {
+    console.error('Erro ao carregar dados:', e);
+    return [];
+  }
 }
 
 function formatarData(s) {
@@ -245,7 +244,7 @@ function switchTab(name) {
   const idx = ['consulta','contab','painel'].indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  if (name === 'painel' && todosLotes.length === 0) carregarPainel();
+  if (name === 'painel') renderPainelCompleto();
 }
 
 function normalizarInput() {
@@ -292,7 +291,7 @@ function atualizarMesAnoBadge() {
 function selecionarTodosMeses() { document.querySelectorAll('#mesano-options input').forEach(cb => cb.checked=true); atualizarMesAnoBadge(); }
 function limparMeses() { document.querySelectorAll('#mesano-options input').forEach(cb => cb.checked=false); atualizarMesAnoBadge(); }
 
-async function buscarLotes() {
+function buscarLotes() {
   const raw = document.getElementById('lote-input').value.trim();
   if (!raw) { alert('Digite ao menos um lote.'); return; }
   const lotes = parseLotes(raw);
@@ -300,34 +299,25 @@ async function buscarLotes() {
   const site = document.getElementById('filtro-pais-consulta').value;
   const meses = getMesesSelecionados();
   const el = document.getElementById('consulta-result');
-  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando, estou procurando seu lote...</div>';
-  document.getElementById('btn-buscar').disabled = true;
-  try {
-    const rows = await fetchSheetData();
-    const encontrados = [], naoEncontrados = [];
-    lotes.forEach(lote => {
-      const lu = lote.toUpperCase().trim();
-      const matches = rows.filter(r => {
-        const lm = (r['LOTE']||'').toUpperCase().trim() === lu;
-        const sm = !site || r['SITE'] === site;
-        const mm = !meses.length || meses.includes(r['MES_COLECTA']);
-        return lm && sm && mm;
-      });
-      if (matches.length) encontrados.push({lote, registros: matches});
-      else naoEncontrados.push(lote);
+  const encontrados = [], naoEncontrados = [];
+  lotes.forEach(lote => {
+    const lu = lote.toUpperCase().trim();
+    const matches = todosLotes.filter(r => {
+      const lm = (r['LOTE']||'').toUpperCase().trim() === lu;
+      const sm = !site || r['SITE'] === site;
+      const mm = !meses.length || meses.includes(r['MES_COLECTA']);
+      return lm && sm && mm;
     });
-    renderConsulta({encontrados, naoEncontrados}, el);
-    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
-  } catch(e) {
-    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '<br><br>Verifique se a API Key está configurada corretamente no código.</div>';
-  }
-  document.getElementById('btn-buscar').disabled = false;
+    if (matches.length) encontrados.push({lote, registros: matches});
+    else naoEncontrados.push(lote);
+  });
+  renderConsulta({encontrados, naoEncontrados}, el);
+  document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
 }
 
 function renderConsulta(res, el) {
   const enc = res.encontrados.length, nao = res.naoEncontrados.length;
   let html = `<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} não encontrado(s)</div></div>`;
-
   if (enc > 0) {
     let totalFaturado=0, totalLotes=0, totalPecas=0;
     res.encontrados.forEach(item => { totalLotes++; item.registros.forEach(r => { totalFaturado+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']); totalPecas+=parseValor(r['CANTIDAD']); }); });
@@ -337,7 +327,6 @@ function renderConsulta(res, el) {
       <div class="card-metric amber"><div class="card-metric-label">Total de peças</div><div class="card-metric-value">${totalPecas.toLocaleString('pt-BR')}</div><div class="card-metric-sub">soma da coluna CANTIDAD</div></div>
     </div>`;
   }
-
   res.encontrados.forEach(item => {
     html += `<div class="lote-block"><div class="lote-header found">✓ Lote ${item.lote} <span class="badge badge-ok">${item.registros.length} registro(s)</span>${item.registros[0]&&item.registros[0]['SITE']?` <span class="badge-site">${item.registros[0]['SITE']}</span>`:''}`;
     html += `</div>`;
@@ -351,11 +340,9 @@ function renderConsulta(res, el) {
     });
     html += '</div>';
   });
-
   res.naoEncontrados.forEach(lote => {
     html += `<div class="lote-block"><div class="lote-header notfound">✗ Lote ${lote} <span class="badge badge-err">Não encontrado</span></div></div>`;
   });
-
   el.innerHTML = html;
   _ultimaConsulta = res;
   document.getElementById('btn-exportar').style.display = res.encontrados.length ? 'inline-flex' : 'none';
@@ -368,73 +355,35 @@ function exportarCSV() {
   const rows = [labels.join(';')];
   _ultimaConsulta.encontrados.forEach(item => item.registros.forEach(r => rows.push(cols.map(c => (r[c]||'').replace(/;/g,',')).join(';'))));
   const blob = new Blob(['\uFEFF'+rows.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'consulta_lotes_layout_ventas.csv';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'consulta_lotes.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-async function conciliar() {
+function conciliar() {
   const rawLotes = document.getElementById('contab-lotes').value.trim();
   const rawValores = document.getElementById('contab-valores').value.trim();
   if (!rawLotes) { alert('Cole ao menos um lote.'); return; }
   const lotes = parseLotes(rawLotes);
   const valores = rawValores.split('\n').map(v => v.trim()).filter(Boolean);
   const el = document.getElementById('contab-result');
-  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando, estou procurando seu lote...</div>';
-  document.getElementById('btn-conciliar').disabled = true;
-  try {
-    const rows = await fetchSheetData();
-    const resultados = lotes.map((lote, idx) => {
-      const lu = lote.toUpperCase().trim();
-      const difContab = parseValor(valores[idx] || '0');
-      const matches = rows.filter(r => (r['LOTE']||'').toUpperCase().trim() === lu);
-      const recuperoLayout = matches.reduce((acc,r) => acc + parseValor(r['RECUPERO_EN_MONEDA_LOCAL']), 0);
-      const difLayout = recuperoLayout - difContab;
-      return { lote, difContab, matches, recuperoLayout, difLayout, encontrado: matches.length > 0 };
-    });
-    renderConciliacao(resultados, el);
-    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
-  } catch(e) {
-    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '</div>';
-  }
-  document.getElementById('btn-conciliar').disabled = false;
-}
-
-function renderConciliacao(resultados, el) {
+  const resultados = lotes.map((lote, idx) => {
+    const lu = lote.toUpperCase().trim();
+    const difContab = parseValor(valores[idx] || '0');
+    const matches = todosLotes.filter(r => (r['LOTE']||'').toUpperCase().trim() === lu);
+    const recuperoLayout = matches.reduce((acc,r) => acc + parseValor(r['RECUPERO_EN_MONEDA_LOCAL']), 0);
+    const difLayout = recuperoLayout - difContab;
+    return { lote, difContab, matches, recuperoLayout, difLayout, encontrado: matches.length > 0 };
+  });
   const enc = resultados.filter(r=>r.encontrado).length;
   const nao = resultados.filter(r=>!r.encontrado).length;
   let html = `<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} divergência(s)</div></div>`;
   html += `<div class="tbl-wrap"><table><thead><tr><th>Lote</th><th>DIF Contab.</th><th>Recupero Layout</th><th>DIF Layout</th><th>Recupero Dash</th><th>DIF Dash</th></tr></thead><tbody>`;
   resultados.forEach(r => {
     const difCor = r.difLayout >= 0 ? 'color:#137333;font-weight:600' : 'color:#c5221f;font-weight:600';
-    html += `<tr>
-      <td><b>${r.lote}</b></td>
-      <td>${formatValor(r.difContab)}</td>
-      <td>${r.encontrado ? formatValor(r.recuperoLayout) : '<span style="color:#c5221f">Não encontrado</span>'}</td>
-      <td style="${difCor}">${r.encontrado ? formatValor(r.difLayout) : '—'}</td>
-      <td style="color:#9aa0a6;font-size:11px">⏳ aguard. BigQuery</td>
-      <td style="color:#9aa0a6">—</td>
-    </tr>`;
+    html += `<tr><td><b>${r.lote}</b></td><td>${formatValor(r.difContab)}</td><td>${r.encontrado ? formatValor(r.recuperoLayout) : '<span style="color:#c5221f">Não encontrado</span>'}</td><td style="${difCor}">${r.encontrado ? formatValor(r.difLayout) : '—'}</td><td style="color:#9aa0a6;font-size:11px">⏳ aguard. BigQuery</td><td style="color:#9aa0a6">—</td></tr>`;
   });
   html += '</tbody></table></div>';
   el.innerHTML = html;
-  _divs = resultados.filter(r=>!r.encontrado).map(r=>r.lote);
-}
-
-async function carregarPainel() {
-  const el = document.getElementById('painel-result');
-  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando todos os lotes...</div>';
-  document.getElementById('counter-row').innerHTML = '';
-  try {
-    todosLotes = await fetchSheetData();
-    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
-    popularFiltros();
-    filtrados = [...todosLotes];
-    renderPainel(el);
-    renderCounters();
-    popularFiltrosConsulta();
-  } catch(e) {
-    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '</div>';
-  }
 }
 
 function popularFiltros() {
@@ -447,13 +396,9 @@ function popularFiltros() {
   document.getElementById('filtro-site').innerHTML = '<option value="">Todos os sites</option>'+sites.map(s=>`<option>${s}</option>`).join('');
   document.getElementById('filtro-mes').innerHTML = '<option value="">Todos os meses</option>'+meses.map(m=>`<option value="${m}">${m} - ${nomeMes[parseInt(m,10)]||m}</option>`).join('');
   document.getElementById('filtro-ano').innerHTML = '<option value="">Todos os anos</option>'+anos.map(a=>`<option>${a}</option>`).join('');
-}
-
-function popularFiltrosConsulta() {
-  const sites = [...new Set(todosLotes.map(r=>r['SITE']).filter(Boolean))].sort();
-  const mesanos = [...new Set(todosLotes.map(r=>r['MES_COLECTA']).filter(Boolean))].sort().reverse();
   const selSite = document.getElementById('filtro-pais-consulta');
   selSite.innerHTML = '<option value="">Todos os países</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+  const mesanos = [...new Set(todosLotes.map(r=>r['MES_COLECTA']).filter(Boolean))].sort().reverse();
   const container = document.getElementById('mesano-options');
   container.innerHTML = '';
   mesanos.forEach(m => {
@@ -496,10 +441,7 @@ function renderCards() {
     const s=r['SITE']||'—'; if(!porSite[s]) porSite[s]={lotes:0,recupero:0}; porSite[s].lotes++; porSite[s].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
     const st=r['STATUS']||'—'; if(!porStatus[st]) porStatus[st]={lotes:0,recupero:0}; porStatus[st].lotes++; porStatus[st].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
   });
-  let html = `<div class="cards-resumo">
-    <div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${filtrados.length}</div><div class="card-metric-sub">registros filtrados</div></div>
-    <div class="card-metric"><div class="card-metric-label">Recupero moeda local</div><div class="card-metric-value">${formatValor(totalRecupero)}</div><div class="card-metric-sub">soma dos registros filtrados</div></div>
-  </div><div class="breakdown-row">`;
+  let html = `<div class="cards-resumo"><div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${filtrados.length}</div><div class="card-metric-sub">registros filtrados</div></div><div class="card-metric"><div class="card-metric-label">Recupero moeda local</div><div class="card-metric-value">${formatValor(totalRecupero)}</div><div class="card-metric-sub">soma dos registros filtrados</div></div></div><div class="breakdown-row">`;
   html += '<div class="breakdown-card"><h3>Recupero por País</h3>';
   Object.keys(porSite).sort().forEach(s => { html += `<div class="breakdown-item"><span>${s} <span style="color:#5f6368;font-size:11px">(${porSite[s].lotes} lotes)</span></span><b>${formatValor(porSite[s].recupero)}</b></div>`; });
   html += '</div><div class="breakdown-card"><h3>Recupero por Status</h3>';
@@ -520,6 +462,12 @@ function renderPainel(el) {
   document.getElementById('btn-exportar-painel').style.display = 'inline-flex';
 }
 
+function renderPainelCompleto() {
+  filtrados = [...todosLotes];
+  renderPainel(document.getElementById('painel-result'));
+  renderCounters();
+}
+
 function exportarCSVPainel() {
   if (!filtrados.length) return;
   const cols=['LOTE','SITE','WAREHOUSE','AREA','PROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL'];
@@ -531,14 +479,13 @@ function exportarCSVPainel() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// Inicializa filtros da consulta quando a página carrega
-window.onload = async function() {
-  try {
-    const rows = await fetchSheetData();
-    todosLotes = rows;
-    popularFiltrosConsulta();
-  } catch(e) { console.log('Erro ao pré-carregar filtros:', e); }
-};
+function inicializar() {
+  todosLotes = carregarDados();
+  popularFiltros();
+  document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
+}
+
+window.onload = inicializar;
 </script>
 </body>
-</html>	
+</html>
