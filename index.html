@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App Conciliação Revenue Lotes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;background:#f8f9fa;color:#202124;min-height:100vh}
+.topbar{background:#FFF176;color:#202124;padding:14px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.topbar h1{font-size:17px;font-weight:500}
+.topbar-right{margin-left:auto;text-align:right}
+.topbar-right span{font-size:12px;display:block}
+.topbar-right b{font-size:12px;font-weight:700}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+.ml-label{font-size:12px;font-weight:700;color:#202124;margin-bottom:16px}
+.tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:24px}
+.tab{padding:13px 18px;cursor:pointer;font-size:13px;color:#5f6368;border:none;background:none;border-bottom:3px solid transparent;font-family:inherit;margin-bottom:-2px}
+.tab.active{color:#202124;border-bottom-color:#202124;font-weight:700}
+.tab:hover:not(.active){background:#f5f5f5}
+.card{background:#fff;border-radius:8px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:14px;font-weight:600;margin-bottom:4px}
+.card p.sub{font-size:12px;color:#5f6368;margin-bottom:16px}
+textarea,input[type=text]{width:100%;border:1px solid #dadce0;border-radius:6px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none}
+textarea:focus,input[type=text]:focus{border-color:#1a73e8}
+select{border:1px solid #dadce0;border-radius:6px;padding:9px 12px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:#202124}
+.filter-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap}
+.filter-group{display:flex;flex-direction:column;gap:5px}
+.filter-group label{font-size:12px;color:#5f6368;font-weight:500}
+.filter-group select{min-width:180px}
+.btn{background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:10px 22px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;margin-right:8px}
+.btn:hover{background:#1557b0}
+.btn:disabled{background:#9aa0a6;cursor:not-allowed}
+.btn-outline{background:#fff;color:#202124;border:1px solid #dadce0;border-radius:6px;padding:10px 22px;font-size:13px;cursor:pointer;font-family:inherit}
+.section{display:none}.section.active{display:block}
+.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600}
+.badge-ok{background:#e6f4ea;color:#137333}
+.badge-err{background:#fce8e6;color:#c5221f}
+.badge-site{background:#e8f0fe;color:#1a73e8;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
+.counter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.counter{background:#f1f3f4;border-radius:6px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.dot-g{background:#137333}.dot-r{background:#c5221f}.dot-b{background:#1a73e8}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 10px;background:#f1f3f4;color:#5f6368;font-weight:600;border-bottom:1px solid #e0e0e0;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f1f3f4;vertical-align:top}
+tr:hover td{background:#f8f9fa}
+.tbl-wrap{overflow-x:auto;border-radius:6px;border:1px solid #e0e0e0}
+.loading{text-align:center;padding:40px;color:#5f6368;font-size:15px}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-4px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:#9aa0a6}
+.alert{padding:12px 16px;border-radius:6px;font-size:13px;margin-bottom:12px;border-left:4px solid}
+.alert-err{background:#fce8e6;border-color:#c5221f;color:#a50e0e}
+.lote-block{border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;overflow:hidden}
+.lote-header{padding:12px 16px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;flex-wrap:wrap}
+.lote-header.found{background:#e6f4ea;border-bottom:1px solid #ceead6}
+.lote-header.notfound{background:#fce8e6;border-bottom:1px solid #f5c6c6}
+.lote-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:14px 16px}
+.field-item{display:flex;flex-direction:column;gap:2px}
+.field-label{font-size:11px;color:#5f6368;font-weight:500;text-transform:uppercase}
+.field-value{font-size:13px;color:#202124;font-weight:500}
+.action-row{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.cards-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+.card-metric{background:#fff;border-radius:8px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:3px solid #1a73e8}
+.card-metric.green{border-top-color:#137333}
+.card-metric.amber{border-top-color:#b06000}
+.card-metric-label{font-size:11px;color:#5f6368;font-weight:500;text-transform:uppercase;margin-bottom:6px}
+.card-metric-value{font-size:22px;font-weight:600;color:#202124}
+.card-metric-sub{font-size:11px;color:#5f6368;margin-top:4px}
+.breakdown-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px}
+.breakdown-card{background:#fff;border-radius:8px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.breakdown-card h3{font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;margin-bottom:10px}
+.breakdown-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f3f4;font-size:13px}
+.breakdown-item:last-child{border-bottom:none}
+.multi-select-wrap{position:relative;min-width:180px}
+.multi-select-trigger{border:1px solid #dadce0;border-radius:6px;padding:9px 12px;font-size:13px;background:#fff;cursor:pointer;user-select:none;white-space:nowrap}
+.multi-select-trigger:hover{border-color:#1a73e8}
+.multi-select-dropdown{position:absolute;top:100%;left:0;z-index:999;background:#fff;border:1px solid #dadce0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:200px;max-height:280px;overflow-y:auto;margin-top:4px}
+.multi-select-actions{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid #f1f3f4}
+.ms-btn{font-size:11px;padding:3px 10px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#5f6368}
+.ms-option{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;cursor:pointer}
+.ms-option:hover{background:#f8f9fa}
+.ms-option input{cursor:pointer;accent-color:#1a73e8}
+.footer-label{position:fixed;bottom:14px;right:18px;font-size:11px;color:#9aa0a6;pointer-events:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>App Conciliação Revenue Lotes</h1>
+  <div class="topbar-right">
+    <span id="update-time"></span>
+    <b>Mercado Livre - Team Controlling</b>
+  </div>
+</div>
+
+<div class="container">
+  <p class="ml-label">Mercado Livre - Team Controlling</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('consulta')">🔍 Consulta dos lotes - Layout de vendas</button>
+    <button class="tab" onclick="switchTab('contab')">⚡ Conciliação SAP Revenue</button>
+    <button class="tab" onclick="switchTab('painel')">📋 Painel Geral - Layout de vendas</button>
+  </div>
+
+  <!-- ABA CONSULTA -->
+  <div id="tab-consulta" class="section active">
+    <div class="card">
+      <h2>Buscar lotes</h2>
+      <p class="sub">Cole os lotes em qualquer formato — vírgula, ponto e vírgula, linha ou espaço</p>
+      <div class="filter-row">
+        <div class="filter-group" style="flex:1;min-width:200px">
+          <label>Lotes (um por linha)</label>
+          <textarea id="lote-input" rows="4" placeholder="Ex:&#10;1250&#10;1205, 1300&#10;1412" onblur="normalizarInput()"></textarea>
+        </div>
+        <div class="filter-group">
+          <label>País (SITE)</label>
+          <select id="filtro-pais-consulta"><option value="">Todos os países</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Mês/Ano <span id="mesano-badge" style="background:#e8f0fe;color:#1a73e8;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;display:none"></span></label>
+          <div class="multi-select-wrap" id="mesano-wrap">
+            <div class="multi-select-trigger" onclick="toggleMesAnoDropdown()" id="mesano-trigger">Todos os meses ▾</div>
+            <div class="multi-select-dropdown" id="mesano-dropdown" style="display:none">
+              <div class="multi-select-actions">
+                <button onclick="selecionarTodosMeses()" class="ms-btn">Todos</button>
+                <button onclick="limparMeses()" class="ms-btn">Limpar</button>
+              </div>
+              <div id="mesano-options"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn" id="btn-buscar" onclick="buscarLotes()">🔍 Buscar</button>
+        <button class="btn-outline" id="btn-exportar" onclick="exportarCSV()" style="display:none">⬇️ Exportar CSV</button>
+        <button class="btn-outline" onclick="limparConsulta()">Limpar</button>
+      </div>
+    </div>
+    <div id="consulta-result"></div>
+  </div>
+
+  <!-- ABA CONCILIAÇÃO SAP -->
+  <div id="tab-contab" class="section">
+    <div class="card">
+      <h2>Conciliação SAP Revenue</h2>
+      <p class="sub">Cole os lotes e valores DIF da contabilidade — o app cruza com o Layout de vendas</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:12px;color:#5f6368;font-weight:500;display:block;margin-bottom:5px">Lotes (um por linha)</label>
+          <textarea id="contab-lotes" rows="8" placeholder="1250&#10;1205&#10;1300" onblur="normalizarInputContab()"></textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#5f6368;font-weight:500;display:block;margin-bottom:5px">Valor DIF contabilidade (um por linha)</label>
+          <textarea id="contab-valores" rows="8" placeholder="1500,00&#10;890,50&#10;2200,00"></textarea>
+          <p style="font-size:11px;color:#5f6368;margin-top:5px">Na mesma ordem dos lotes ao lado</p>
+        </div>
+      </div>
+      <div class="action-row">
+        <button class="btn" id="btn-conciliar" onclick="conciliar()">🤖 Conciliar</button>
+        <button class="btn-outline" onclick="document.getElementById('contab-lotes').value='';document.getElementById('contab-valores').value='';document.getElementById('contab-result').innerHTML=''">Limpar</button>
+      </div>
+    </div>
+    <div id="contab-result"></div>
+  </div>
+
+  <!-- ABA PAINEL -->
+  <div id="tab-painel" class="section">
+    <div class="card">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <input type="text" id="filtro-txt" placeholder="Filtrar por lote, site, status..." style="flex:1;min-width:180px;font-size:13px" oninput="aplicarFiltros()">
+        <select id="filtro-status" onchange="aplicarFiltros()" style="font-size:13px">><option value="">Todos os status</option></select>
+        <select id="filtro-site" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os sites</option></select>
+        <select id="filtro-mes" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os meses</option></select>
+        <select id="filtro-ano" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os anos</option></select>
+        <button class="btn" style="margin:0" onclick="carregarPainel()">↻ Atualizar</button>
+        <button class="btn-outline" id="btn-exportar-painel" style="display:none" onclick="exportarCSVPainel()">⬇️ Exportar CSV</button>
+      </div>
+      <div id="counter-row" class="counter-row"></div>
+    </div>
+    <div id="cards-resumo"></div>
+    <div id="painel-result"></div>
+  </div>
+</div>
+
+<div class="footer-label">Mercado Livre — Team Controlling</div>
+
+<script>
+const SHEET_ID = '1eVAgQJtutfz_5e38HuuehDo-eEwX1ALKfWjwY9n7GNk';
+const ABA = 'Datos';
+const API_KEY = 'AIzaSyDEIxAVhw6drlTp64PqygTsmNvk8zM0ADc';
+
+var todosLotes = [], filtrados = [], _ultimaConsulta = null, _divs = [];
+
+async function fetchSheetData() {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ABA)}?key=${API_KEY}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Erro ao acessar planilha: ' + r.status);
+  const d = await r.json();
+  if (!d.values || d.values.length < 2) return [];
+  const headers = d.values[0].map(h => String(h).trim().toUpperCase());
+  return d.values.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => {
+      let val = String(row[i] || '').trim();
+      if (h.includes('FECHA') || h.includes('MES') || h.includes('DATE')) val = formatarData(val);
+      obj[h] = val;
+    });
+    return obj;
+  });
+}
+
+function formatarData(s) {
+  if (!s) return '';
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const m = d.getMonth() + 1;
+    return (m < 10 ? '0' + m : m) + '/' + d.getFullYear();
+  }
+  const r1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (r1) return r1[2].padStart(2,'0') + '/' + r1[3];
+  const r2 = s.match(/^(\d{1,2})[\/\-](\d{4})$/);
+  if (r2) return r2[1].padStart(2,'0') + '/' + r2[2];
+  return s;
+}
+
+function parseLotes(raw) {
+  return raw.split(/[\n\r,;|\t]+/).map(l => l.trim()).filter(Boolean);
+}
+
+function parseValor(v) {
+  if (!v || v === '—') return 0;
+  const n = parseFloat(String(v).replace(/[^0-9,.\-]/g,'').replace(',','.'));
+  return isNaN(n) ? 0 : n;
+}
+
+function formatValor(n) {
+  return n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const idx = ['consulta','contab','painel'].indexOf(name);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'painel' && todosLotes.length === 0) carregarPainel();
+}
+
+function normalizarInput() {
+  const lotes = parseLotes(document.getElementById('lote-input').value);
+  if (lotes.length) document.getElementById('lote-input').value = lotes.join('\n');
+}
+
+function normalizarInputContab() {
+  const lotes = parseLotes(document.getElementById('contab-lotes').value);
+  if (lotes.length) document.getElementById('contab-lotes').value = lotes.join('\n');
+}
+
+function limparConsulta() {
+  document.getElementById('lote-input').value = '';
+  document.getElementById('filtro-pais-consulta').value = '';
+  limparMeses();
+  document.getElementById('consulta-result').innerHTML = '';
+  document.getElementById('btn-exportar').style.display = 'none';
+  _ultimaConsulta = null;
+}
+
+function toggleMesAnoDropdown() {
+  const dd = document.getElementById('mesano-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('mesano-wrap');
+  if (wrap && !wrap.contains(e.target)) document.getElementById('mesano-dropdown').style.display = 'none';
+});
+
+function getMesesSelecionados() {
+  return Array.from(document.querySelectorAll('#mesano-options input:checked')).map(cb => cb.value);
+}
+
+function atualizarMesAnoBadge() {
+  const sel = getMesesSelecionados();
+  const badge = document.getElementById('mesano-badge');
+  const trigger = document.getElementById('mesano-trigger');
+  if (!sel.length) { badge.style.display='none'; trigger.textContent='Todos os meses ▾'; }
+  else { badge.style.display='inline'; badge.textContent=sel.length; trigger.textContent=sel.length===1?sel[0]:sel.length+' meses ▾'; }
+}
+
+function selecionarTodosMeses() { document.querySelectorAll('#mesano-options input').forEach(cb => cb.checked=true); atualizarMesAnoBadge(); }
+function limparMeses() { document.querySelectorAll('#mesano-options input').forEach(cb => cb.checked=false); atualizarMesAnoBadge(); }
+
+async function buscarLotes() {
+  const raw = document.getElementById('lote-input').value.trim();
+  if (!raw) { alert('Digite ao menos um lote.'); return; }
+  const lotes = parseLotes(raw);
+  document.getElementById('lote-input').value = lotes.join('\n');
+  const site = document.getElementById('filtro-pais-consulta').value;
+  const meses = getMesesSelecionados();
+  const el = document.getElementById('consulta-result');
+  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando, estou procurando seu lote...</div>';
+  document.getElementById('btn-buscar').disabled = true;
+  try {
+    const rows = await fetchSheetData();
+    const encontrados = [], naoEncontrados = [];
+    lotes.forEach(lote => {
+      const lu = lote.toUpperCase().trim();
+      const matches = rows.filter(r => {
+        const lm = (r['LOTE']||'').toUpperCase().trim() === lu;
+        const sm = !site || r['SITE'] === site;
+        const mm = !meses.length || meses.includes(r['MES_COLECTA']);
+        return lm && sm && mm;
+      });
+      if (matches.length) encontrados.push({lote, registros: matches});
+      else naoEncontrados.push(lote);
+    });
+    renderConsulta({encontrados, naoEncontrados}, el);
+    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '<br><br>Verifique se a API Key está configurada corretamente no código.</div>';
+  }
+  document.getElementById('btn-buscar').disabled = false;
+}
+
+function renderConsulta(res, el) {
+  const enc = res.encontrados.length, nao = res.naoEncontrados.length;
+  let html = `<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} não encontrado(s)</div></div>`;
+
+  if (enc > 0) {
+    let totalFaturado=0, totalLotes=0, totalPecas=0;
+    res.encontrados.forEach(item => { totalLotes++; item.registros.forEach(r => { totalFaturado+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']); totalPecas+=parseValor(r['CANTIDAD']); }); });
+    html += `<div class="cards-resumo" style="margin-bottom:20px">
+      <div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${totalLotes}</div><div class="card-metric-sub">lotes encontrados</div></div>
+      <div class="card-metric"><div class="card-metric-label">Total faturado — moeda local</div><div class="card-metric-value">${formatValor(totalFaturado)}</div><div class="card-metric-sub">soma do recupero</div></div>
+      <div class="card-metric amber"><div class="card-metric-label">Total de peças</div><div class="card-metric-value">${totalPecas.toLocaleString('pt-BR')}</div><div class="card-metric-sub">soma da coluna CANTIDAD</div></div>
+    </div>`;
+  }
+
+  res.encontrados.forEach(item => {
+    html += `<div class="lote-block"><div class="lote-header found">✓ Lote ${item.lote} <span class="badge badge-ok">${item.registros.length} registro(s)</span>${item.registros[0]&&item.registros[0]['SITE']?` <span class="badge-site">${item.registros[0]['SITE']}</span>`:''}`;
+    html += `</div>`;
+    item.registros.forEach((r,i) => {
+      if(i>0) html += '<hr style="border:none;border-top:1px solid #f1f3f4">';
+      html += '<div class="lote-fields">';
+      [['SITE','País'],['WAREHOUSE','Warehouse'],['FECHA_DE_REGISTRO','Data registro'],['AREA','Área'],['PROCESO','Processo'],['SUBPROCESO','Subprocesso'],['STATUS','Status'],['TYPE_SELLER','Tipo vendedor'],['SALIDA_COLECTA','Saída coleta'],['MES_COLECTA','Mês coleta'],['RECUPERO_EN_MONEDA_LOCAL','Recupero moeda local'],['TIPO_DE_RETIRO','Tipo retiro'],['CANTIDAD','Total de peças']].forEach(([k,l]) => {
+        if(r[k]) html += `<div class="field-item"><span class="field-label">${l}</span><span class="field-value">${r[k]}</span></div>`;
+      });
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  res.naoEncontrados.forEach(lote => {
+    html += `<div class="lote-block"><div class="lote-header notfound">✗ Lote ${lote} <span class="badge badge-err">Não encontrado</span></div></div>`;
+  });
+
+  el.innerHTML = html;
+  _ultimaConsulta = res;
+  document.getElementById('btn-exportar').style.display = res.encontrados.length ? 'inline-flex' : 'none';
+}
+
+function exportarCSV() {
+  if (!_ultimaConsulta || !_ultimaConsulta.encontrados.length) return;
+  const cols = ['LOTE','SITE','WAREHOUSE','FECHA_DE_REGISTRO','AREA','PROCESO','SUBPROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL','TIPO_DE_RETIRO','CANTIDAD'];
+  const labels = ['Lote','País','Warehouse','Data registro','Área','Processo','Subprocesso','Status','Tipo vendedor','Saída coleta','Mês coleta','Recupero moeda local','Tipo retiro','Total peças'];
+  const rows = [labels.join(';')];
+  _ultimaConsulta.encontrados.forEach(item => item.registros.forEach(r => rows.push(cols.map(c => (r[c]||'').replace(/;/g,',')).join(';'))));
+  const blob = new Blob(['\uFEFF'+rows.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'consulta_lotes_layout_ventas.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+async function conciliar() {
+  const rawLotes = document.getElementById('contab-lotes').value.trim();
+  const rawValores = document.getElementById('contab-valores').value.trim();
+  if (!rawLotes) { alert('Cole ao menos um lote.'); return; }
+  const lotes = parseLotes(rawLotes);
+  const valores = rawValores.split('\n').map(v => v.trim()).filter(Boolean);
+  const el = document.getElementById('contab-result');
+  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando, estou procurando seu lote...</div>';
+  document.getElementById('btn-conciliar').disabled = true;
+  try {
+    const rows = await fetchSheetData();
+    const resultados = lotes.map((lote, idx) => {
+      const lu = lote.toUpperCase().trim();
+      const difContab = parseValor(valores[idx] || '0');
+      const matches = rows.filter(r => (r['LOTE']||'').toUpperCase().trim() === lu);
+      const recuperoLayout = matches.reduce((acc,r) => acc + parseValor(r['RECUPERO_EN_MONEDA_LOCAL']), 0);
+      const difLayout = recuperoLayout - difContab;
+      return { lote, difContab, matches, recuperoLayout, difLayout, encontrado: matches.length > 0 };
+    });
+    renderConciliacao(resultados, el);
+    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '</div>';
+  }
+  document.getElementById('btn-conciliar').disabled = false;
+}
+
+function renderConciliacao(resultados, el) {
+  const enc = resultados.filter(r=>r.encontrado).length;
+  const nao = resultados.filter(r=>!r.encontrado).length;
+  let html = `<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} divergência(s)</div></div>`;
+  html += `<div class="tbl-wrap"><table><thead><tr><th>Lote</th><th>DIF Contab.</th><th>Recupero Layout</th><th>DIF Layout</th><th>Recupero Dash</th><th>DIF Dash</th></tr></thead><tbody>`;
+  resultados.forEach(r => {
+    const difCor = r.difLayout >= 0 ? 'color:#137333;font-weight:600' : 'color:#c5221f;font-weight:600';
+    html += `<tr>
+      <td><b>${r.lote}</b></td>
+      <td>${formatValor(r.difContab)}</td>
+      <td>${r.encontrado ? formatValor(r.recuperoLayout) : '<span style="color:#c5221f">Não encontrado</span>'}</td>
+      <td style="${difCor}">${r.encontrado ? formatValor(r.difLayout) : '—'}</td>
+      <td style="color:#9aa0a6;font-size:11px">⏳ aguard. BigQuery</td>
+      <td style="color:#9aa0a6">—</td>
+    </tr>`;
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+  _divs = resultados.filter(r=>!r.encontrado).map(r=>r.lote);
+}
+
+async function carregarPainel() {
+  const el = document.getElementById('painel-result');
+  el.innerHTML = '<div class="loading">🤖<br><br><span class="spin"></span> Carregando todos os lotes...</div>';
+  document.getElementById('counter-row').innerHTML = '';
+  try {
+    todosLotes = await fetchSheetData();
+    document.getElementById('update-time').textContent = 'Atualizado: ' + new Date().toLocaleString('pt-BR');
+    popularFiltros();
+    filtrados = [...todosLotes];
+    renderPainel(el);
+    renderCounters();
+    popularFiltrosConsulta();
+  } catch(e) {
+    el.innerHTML = '<div class="alert alert-err">❌ ' + e.message + '</div>';
+  }
+}
+
+function popularFiltros() {
+  const statuses = [...new Set(todosLotes.map(r=>r['STATUS']).filter(Boolean))].sort();
+  const sites = [...new Set(todosLotes.map(r=>r['SITE']).filter(Boolean))].sort();
+  const meses = [...new Set(todosLotes.map(r=>{const p=(r['MES_COLECTA']||'').split('/');return p.length===2?p[0]:'';}).filter(Boolean))].sort();
+  const anos = [...new Set(todosLotes.map(r=>{const p=(r['MES_COLECTA']||'').split('/');return p.length===2?p[1]:'';}).filter(Boolean))].sort().reverse();
+  const nomeMes = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  document.getElementById('filtro-status').innerHTML = '<option value="">Todos os status</option>'+statuses.map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('filtro-site').innerHTML = '<option value="">Todos os sites</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+  document.getElementById('filtro-mes').innerHTML = '<option value="">Todos os meses</option>'+meses.map(m=>`<option value="${m}">${m} - ${nomeMes[parseInt(m,10)]||m}</option>`).join('');
+  document.getElementById('filtro-ano').innerHTML = '<option value="">Todos os anos</option>'+anos.map(a=>`<option>${a}</option>`).join('');
+}
+
+function popularFiltrosConsulta() {
+  const sites = [...new Set(todosLotes.map(r=>r['SITE']).filter(Boolean))].sort();
+  const mesanos = [...new Set(todosLotes.map(r=>r['MES_COLECTA']).filter(Boolean))].sort().reverse();
+  const selSite = document.getElementById('filtro-pais-consulta');
+  selSite.innerHTML = '<option value="">Todos os países</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+  const container = document.getElementById('mesano-options');
+  container.innerHTML = '';
+  mesanos.forEach(m => {
+    const div = document.createElement('div'); div.className='ms-option';
+    div.innerHTML = `<input type="checkbox" value="${m}" onchange="atualizarMesAnoBadge()"> ${m}`;
+    container.appendChild(div);
+  });
+}
+
+function aplicarFiltros() {
+  const txt = document.getElementById('filtro-txt').value.toLowerCase();
+  const status = document.getElementById('filtro-status').value;
+  const site = document.getElementById('filtro-site').value;
+  const mes = document.getElementById('filtro-mes').value;
+  const ano = document.getElementById('filtro-ano').value;
+  filtrados = todosLotes.filter(r => {
+    const mt = !txt || Object.values(r).some(v=>v.toLowerCase().includes(txt));
+    const ms = !status || r['STATUS']===status;
+    const msi = !site || r['SITE']===site;
+    const p = (r['MES_COLECTA']||'').split('/');
+    const mme = !mes || p[0]===mes;
+    const mae = !ano || p[1]===ano;
+    return mt&&ms&&msi&&mme&&mae;
+  });
+  renderPainel(document.getElementById('painel-result'));
+  renderCounters();
+}
+
+function renderCounters() {
+  document.getElementById('counter-row').innerHTML =
+    `<div class="counter"><span class="dot dot-b"></span>${filtrados.length} exibidos</div><div class="counter"><span class="dot dot-g"></span>${todosLotes.length} total</div>`;
+}
+
+function renderCards() {
+  const el = document.getElementById('cards-resumo');
+  if (!filtrados.length) { el.innerHTML=''; return; }
+  const totalRecupero = filtrados.reduce((acc,r)=>acc+parseValor(r['RECUPERO_EN_MONEDA_LOCAL']),0);
+  const porSite={}, porStatus={};
+  filtrados.forEach(r => {
+    const s=r['SITE']||'—'; if(!porSite[s]) porSite[s]={lotes:0,recupero:0}; porSite[s].lotes++; porSite[s].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
+    const st=r['STATUS']||'—'; if(!porStatus[st]) porStatus[st]={lotes:0,recupero:0}; porStatus[st].lotes++; porStatus[st].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
+  });
+  let html = `<div class="cards-resumo">
+    <div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${filtrados.length}</div><div class="card-metric-sub">registros filtrados</div></div>
+    <div class="card-metric"><div class="card-metric-label">Recupero moeda local</div><div class="card-metric-value">${formatValor(totalRecupero)}</div><div class="card-metric-sub">soma dos registros filtrados</div></div>
+  </div><div class="breakdown-row">`;
+  html += '<div class="breakdown-card"><h3>Recupero por País</h3>';
+  Object.keys(porSite).sort().forEach(s => { html += `<div class="breakdown-item"><span>${s} <span style="color:#5f6368;font-size:11px">(${porSite[s].lotes} lotes)</span></span><b>${formatValor(porSite[s].recupero)}</b></div>`; });
+  html += '</div><div class="breakdown-card"><h3>Recupero por Status</h3>';
+  Object.keys(porStatus).sort().forEach(s => { html += `<div class="breakdown-item"><span>${s} <span style="color:#5f6368;font-size:11px">(${porStatus[s].lotes} lotes)</span></span><b>${formatValor(porStatus[s].recupero)}</b></div>`; });
+  html += '</div></div>';
+  el.innerHTML = html;
+}
+
+function renderPainel(el) {
+  if (!filtrados.length) { el.innerHTML='<div class="empty">Nenhum lote encontrado.</div>'; document.getElementById('cards-resumo').innerHTML=''; document.getElementById('btn-exportar-painel').style.display='none'; return; }
+  renderCards();
+  const cols=['LOTE','SITE','WAREHOUSE','AREA','PROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL'];
+  const labels=['Lote','País','Warehouse','Área','Processo','Status','Tipo vendedor','Saída coleta','Mês coleta','Recupero moeda local'];
+  let html = `<div class="tbl-wrap"><table><thead><tr>${cols.map((c,i)=>`<th>${labels[i]}</th>`).join('')}</tr></thead><tbody>`;
+  filtrados.forEach(r => { html += `<tr>${cols.map(c=>`<td>${r[c]||'—'}</td>`).join('')}</tr>`; });
+  html += `</tbody></table></div><div style="font-size:12px;color:#5f6368;margin-top:8px">${filtrados.length} registro(s)</div>`;
+  el.innerHTML = html;
+  document.getElementById('btn-exportar-painel').style.display = 'inline-flex';
+}
+
+function exportarCSVPainel() {
+  if (!filtrados.length) return;
+  const cols=['LOTE','SITE','WAREHOUSE','AREA','PROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL'];
+  const labels=['Lote','País','Warehouse','Área','Processo','Status','Tipo vendedor','Saída coleta','Mês coleta','Recupero moeda local'];
+  const rows=[labels.join(';')];
+  filtrados.forEach(r => rows.push(cols.map(c=>(r[c]||'').replace(/;/g,',')).join(';')));
+  const blob = new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='painel_layout_vendas.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// Inicializa filtros da consulta quando a página carrega
+window.onload = async function() {
+  try {
+    const rows = await fetchSheetData();
+    todosLotes = rows;
+    popularFiltrosConsulta();
+  } catch(e) { console.log('Erro ao pré-carregar filtros:', e); }
+};
+</script>
+</body>
+</html>	
