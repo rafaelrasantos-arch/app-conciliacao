@@ -3,118 +3,215 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>App Conciliacao Revenue Lotes</title>
+<title>Cierre DataFlow</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;font-size:14px;background:#f8f9fa;color:#202124;min-height:100vh}
-.topbar{background:#FFF176;color:#202124;padding:14px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-.topbar h1{font-size:17px;font-weight:500}
-.topbar-right{margin-left:auto;text-align:right}
-.topbar-right span{font-size:12px;display:block}
-.topbar-right b{font-size:12px;font-weight:700}
-.container{max-width:1100px;margin:0 auto;padding:24px 16px}
-.ml-label{font-size:12px;font-weight:700;color:#202124;margin-bottom:16px}
-.tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:24px}
-.tab{padding:13px 18px;cursor:pointer;font-size:13px;color:#5f6368;border:none;background:none;border-bottom:3px solid transparent;font-family:inherit;margin-bottom:-2px}
-.tab.active{color:#202124;border-bottom-color:#202124;font-weight:700}
-.tab:hover:not(.active){background:#f5f5f5}
-.card{background:#fff;border-radius:8px;padding:20px 24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.card h2{font-size:14px;font-weight:600;margin-bottom:4px}
-.card p.sub{font-size:12px;color:#5f6368;margin-bottom:16px}
-textarea,input[type=text]{width:100%;border:1px solid #dadce0;border-radius:6px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none}
-textarea:focus,input[type=text]:focus{border-color:#1a73e8}
-select{border:1px solid #dadce0;border-radius:6px;padding:9px 12px;font-size:13px;font-family:inherit;background:#fff;outline:none;color:#202124}
-.filter-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap}
-.filter-group{display:flex;flex-direction:column;gap:5px}
-.filter-group label{font-size:12px;color:#5f6368;font-weight:500}
-.filter-group select{min-width:180px}
-.btn{background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:10px 22px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;margin-right:8px}
-.btn:hover{background:#1557b0}
-.btn:disabled{background:#9aa0a6;cursor:not-allowed}
-.btn-outline{background:#fff;color:#202124;border:1px solid #dadce0;border-radius:6px;padding:10px 22px;font-size:13px;cursor:pointer;font-family:inherit}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:15px;min-height:100vh;position:relative;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:#f0f2f5;z-index:-2}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32'%3E%3Cpath d='M 32 0 L 0 0 0 32' fill='none' stroke='%231a3a5c' stroke-width='0.8'/%3E%3C/svg%3E");opacity:0.045;z-index:-1}
+@keyframes grow{from{width:0}to{width:100%}}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,#0a1628 0%,#1a3a5c 100%);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:56px;position:relative;overflow:hidden}
+.topbar-accent-left{position:absolute;left:0;top:0;bottom:0;width:3px;background:#FFE600}
+.topbar-glow1{position:absolute;right:-30px;top:-30px;width:100px;height:100px;background:#FFE600;border-radius:50%;opacity:0.06}
+.topbar-glow2{position:absolute;right:60px;top:-20px;width:60px;height:60px;background:#FFE600;border-radius:50%;opacity:0.04}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-icon{background:#FFE600;width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.topbar-name{color:white;font-size:18px;font-weight:600;line-height:1.2}
+.topbar-sub{color:rgba(255,255,255,0.4);font-size:10px;letter-spacing:0.5px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.topbar-right-top{display:flex;align-items:center;gap:12px}
+.topbar-team{text-align:right}
+.topbar-team-name{color:rgba(255,255,255,0.95);font-size:13px;font-weight:600;letter-spacing:0.2px;display:block}
+.topbar-team-org{color:rgba(255,255,255,0.45);font-size:10px;display:block;margin-top:1px}
+.topbar-version{color:rgba(255,255,255,0.25);font-size:10px;font-family:monospace;display:block;margin-top:2px;text-align:right}
+.topbar-divider{width:1px;height:32px;background:rgba(255,255,255,0.1)}
+.topbar-status{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.08);border-radius:20px;padding:4px 10px}
+.topbar-status .dot{width:5px;height:5px;background:#22c55e;border-radius:50%}
+.topbar-status span{color:rgba(255,255,255,0.6);font-size:10px}
+
+/* NAVBAR */
+.navbar{background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.navbar-progress{height:2px;background:#f0f2f5;overflow:hidden}
+.navbar-progress-bar{height:100%;background:linear-gradient(90deg,#FFE600,#1a3a5c,#36b37e);animation:grow 2s ease-out forwards;border-radius:2px;width:0}
+.navbar-inner{padding:0 28px;display:flex;align-items:center;gap:0}
+.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:#5e7084;padding:11px 18px;font-size:14px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px}
+.tab.active{color:#1a3a5c;border-bottom-color:#1a3a5c;font-weight:600}
+.tab:hover:not(.active){color:#1a2b3c}
+.navbar-update{margin-left:auto;display:flex;align-items:center;gap:6px}
+.navbar-update span{font-size:11px;color:#8c97a8}
+
+/* CONTAINER */
+.container{max-width:1100px;margin:0 auto;padding:20px 28px}
 .section{display:none}.section.active{display:block}
-.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:12px;font-weight:600}
-.badge-ok{background:#e6f4ea;color:#137333}
-.badge-err{background:#fce8e6;color:#c5221f}
-.badge-site{background:#e8f0fe;color:#1a73e8;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600}
-.counter-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-.counter{background:#f1f3f4;border-radius:6px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:7px}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.dot-g{background:#137333}.dot-r{background:#c5221f}.dot-b{background:#1a73e8}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:9px 10px;background:#f1f3f4;color:#5f6368;font-weight:600;border-bottom:1px solid #e0e0e0;white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid #f1f3f4;vertical-align:top}
-tr:hover td{background:#f8f9fa}
-.tbl-wrap{overflow-x:auto;border-radius:6px;border:1px solid #e0e0e0}
-.loading{text-align:center;padding:40px;color:#5f6368;font-size:15px}
-.spin{display:inline-block;width:18px;height:18px;border:2px solid #e0e0e0;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-4px;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:40px;color:#9aa0a6}
-.alert{padding:12px 16px;border-radius:6px;font-size:13px;margin-bottom:12px;border-left:4px solid}
-.alert-err{background:#fce8e6;border-color:#c5221f;color:#a50e0e}
-.lote-block{border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;overflow:hidden}
-.lote-header{padding:12px 16px;display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;flex-wrap:wrap}
-.lote-header.found{background:#e6f4ea;border-bottom:1px solid #ceead6}
-.lote-header.notfound{background:#fce8e6;border-bottom:1px solid #f5c6c6}
-.lote-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:14px 16px}
+
+/* CARDS */
+.card{background:rgba(255,255,255,0.95);border-radius:12px;padding:20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.card-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f0f2f5}
+.card-header span{font-size:14px;font-weight:600;color:#1a2b3c}
+.card-title{font-size:13px;font-weight:600;color:#1a3a5c;margin-bottom:4px}
+.card-sub{font-size:12px;color:#8c97a8;margin-bottom:14px}
+
+/* FORM */
+.filter-row{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap}
+.filter-row .filter-group:first-child{flex:1;min-width:280px}
+.filter-row .filter-group:not(:first-child){min-width:160px}
+.filter-group{display:flex;flex-direction:column;gap:5px}
+.filter-group label{font-size:12px;color:#1a2b3c;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+textarea,input[type=text]{width:100%;border:1.5px solid #e8ecf0;border-radius:8px;padding:10px 12px;font-size:14px;font-family:monospace;color:#1a2b3c;background:#fafbfc;outline:none;box-sizing:border-box}
+textarea:focus,input[type=text]:focus{border-color:#1a3a5c}
+select{width:100%;border:1.5px solid #e8ecf0;border-radius:8px;padding:10px 12px;font-size:14px;color:#1a2b3c;background:#fafbfc;outline:none;font-family:inherit}
+select:focus{border-color:#1a3a5c}
+
+/* BUTTONS */
+.btn{background:#1a3a5c;color:white;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:#1e4a6e}
+.btn:disabled{background:#9aa0a6;cursor:not-allowed}
+.btn-outline{background:white;color:#5e7084;border:1.5px solid #e8ecf0;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.btn-outline:hover{background:#f8fafc}
+.btn-ghost{background:white;color:#a0aab4;border:1.5px solid #e8ecf0;border-radius:8px;padding:10px 16px;font-size:14px;cursor:pointer;font-family:inherit}
+.action-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* STATUS */
+.counter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.counter{display:flex;align-items:center;gap:5px;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:500;border:1px solid}
+.counter-g{background:#edfaf3;border-color:#b5ead7;color:#00675a}
+.counter-r{background:#fff1ee;border-color:#ffc4b5;color:#bf2600}
+.counter-b{background:#eff6ff;border-color:#bfdbfe;color:#1a3a5c}
+.dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:2px}
+.dot-g{background:#00875a}.dot-r{background:#de350b}.dot-b{background:#1a3a5c}
+
+/* METRIC CARDS */
+.cards-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.card-metric{background:rgba(255,255,255,0.95);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.card-metric-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.card-metric-label{font-size:11px;color:#8c97a8;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center}
+.card-metric-value{font-size:30px;font-weight:600;color:#1a2b3c;font-family:monospace}
+
+/* LOTE BLOCKS */
+.lote-block{background:rgba(255,255,255,0.95);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:10px}
+.lote-header{padding:12px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lote-header.found{background:#edfaf3;border-bottom:1px solid #b5ead7}
+.lote-header.notfound{background:#fff1ee;border-bottom:1px solid #ffc4b5}
+.lote-header-name{font-size:13px;font-weight:600;color:#1a2b3c}
+.lote-status{margin-left:auto;font-size:11px;color:#8c97a8;font-family:monospace}
+.badge{display:inline-block;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600}
+.badge-ok{background:#edfaf3;color:#00675a;border:1px solid #b5ead7}
+.badge-err{background:#fff1ee;color:#bf2600;border:1px solid #ffc4b5}
+.badge-site{background:#e6f0ff;color:#1a3a5c}
+.lote-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:14px 18px}
 .field-item{display:flex;flex-direction:column;gap:2px}
-.field-label{font-size:11px;color:#5f6368;font-weight:500;text-transform:uppercase}
-.field-value{font-size:13px;color:#202124;font-weight:500}
-.action-row{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
-.cards-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
-.card-metric{background:#fff;border-radius:8px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);border-top:3px solid #1a73e8}
-.card-metric.green{border-top-color:#137333}
-.card-metric.amber{border-top-color:#b06000}
-.card-metric-label{font-size:11px;color:#5f6368;font-weight:500;text-transform:uppercase;margin-bottom:6px}
-.card-metric-value{font-size:22px;font-weight:600;color:#202124}
-.card-metric-sub{font-size:11px;color:#5f6368;margin-top:4px}
-.breakdown-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:20px}
-.breakdown-card{background:#fff;border-radius:8px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.breakdown-card h3{font-size:12px;font-weight:600;color:#5f6368;text-transform:uppercase;margin-bottom:10px}
-.breakdown-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f3f4;font-size:13px}
+.field-label{font-size:10px;color:#8c97a8;font-weight:500;text-transform:uppercase;letter-spacing:0.6px}
+.field-value{font-size:13px;color:#1a2b3c;font-weight:500}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e8ecf0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:9px 12px;background:#f8fafc;color:#8c97a8;font-weight:600;border-bottom:1px solid #e8ecf0;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+tr:hover td{background:#f8fafc}
+
+/* MISC */
+.loading{text-align:center;padding:40px;color:#8c97a8;font-size:14px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid #e8ecf0;border-top-color:#1a3a5c;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:#b0bac6}
+.alert-err{padding:12px 16px;border-radius:8px;font-size:13px;margin-bottom:12px;border-left:4px solid #de350b;background:#fff1ee;color:#bf2600}
+
+/* BREAKDOWN */
+.breakdown-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:14px}
+.breakdown-card{background:rgba(255,255,255,0.95);border-radius:12px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.breakdown-card h3{font-size:11px;font-weight:600;color:#8c97a8;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px}
+.breakdown-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
 .breakdown-item:last-child{border-bottom:none}
-.multi-select-wrap{position:relative;min-width:180px}
-.multi-select-trigger{border:1px solid #dadce0;border-radius:6px;padding:9px 12px;font-size:13px;background:#fff;cursor:pointer;user-select:none;white-space:nowrap}
-.multi-select-trigger:hover{border-color:#1a73e8}
-.multi-select-dropdown{position:absolute;top:100%;left:0;z-index:999;background:#fff;border:1px solid #dadce0;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);min-width:200px;max-height:280px;overflow-y:auto;margin-top:4px}
-.multi-select-actions{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid #f1f3f4}
-.ms-btn{font-size:11px;padding:3px 10px;border:1px solid #dadce0;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit;color:#5f6368}
-.ms-option{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;cursor:pointer}
-.ms-option:hover{background:#f8f9fa}
-.ms-option input{cursor:pointer;accent-color:#1a73e8}
-.footer-label{position:fixed;bottom:14px;right:18px;font-size:11px;color:#9aa0a6;pointer-events:none}
+
+/* MULTI SELECT */
+.multi-select-wrap{position:relative}
+.multi-select-trigger{border:1.5px solid #e8ecf0;border-radius:8px;padding:9px 11px;font-size:12px;background:#fafbfc;cursor:pointer;user-select:none;white-space:nowrap;color:#1a2b3c}
+.multi-select-trigger:hover{border-color:#1a3a5c}
+.multi-select-dropdown{position:absolute;top:100%;left:0;z-index:999;background:#fff;border:1.5px solid #e8ecf0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);min-width:200px;max-height:280px;overflow-y:auto;margin-top:4px}
+.multi-select-actions{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid #f1f5f9}
+.ms-btn{font-size:11px;padding:3px 10px;border:1.5px solid #e8ecf0;border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;color:#8c97a8}
+.ms-option{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:12px;cursor:pointer}
+.ms-option:hover{background:#f8fafc}
+.ms-option input{cursor:pointer;accent-color:#1a3a5c}
+
+/* PAINEL */
+.painel-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.painel-filters input[type=text]{flex:1;min-width:180px;font-family:inherit;font-size:12px}
+.painel-filters select{font-size:12px;width:auto}
+
+/* FOOTER */
+.footer-tech{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-top:1px solid #e8ecf0;margin-top:4px}
+.footer-tech span{font-size:10px;color:#b0bac6;font-family:monospace}
+.footer-left,.footer-right{display:flex;align-items:center;gap:16px}
 </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
 <div class="topbar">
-  <h1>App Conciliacao Revenue Lotes</h1>
+  <div class="topbar-accent-left"></div>
+  <div class="topbar-glow1"></div>
+  <div class="topbar-glow2"></div>
+  <div class="topbar-left">
+    <div class="topbar-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a1628" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div>
+      <div class="topbar-name">Cierre DataFlow</div>
+      <div class="topbar-sub">Revenue · Controlling</div>
+    </div>
+  </div>
   <div class="topbar-right">
-    <span id="update-time"></span>
-    <b>Mercado Livre - Team Controlling</b>
+    <div class="topbar-team">
+      <span class="topbar-team-name">Team Controlling</span>
+      <span class="topbar-team-org">Mercado Livre</span>
+      <span class="topbar-version">v2.1.0</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-status">
+      <div class="dot"></div>
+      <span>online</span>
+    </div>
   </div>
 </div>
-<div class="container">
-  <p class="ml-label">Mercado Livre - Team Controlling</p>
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('consulta')">Consulta dos lotes - Layout de vendas</button>
-    <button class="tab" onclick="switchTab('contab')">Conciliacao SAP Revenue</button>
-    <button class="tab" onclick="switchTab('painel')">Painel Geral - Layout de vendas</button>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="navbar-progress"><div class="navbar-progress-bar"></div></div>
+  <div class="navbar-inner">
+    <button class="tab active" onclick="switchTab('consulta')">Consulta de lotes</button>
+    <button class="tab" onclick="switchTab('contab')">Conciliação SAP</button>
+    <button class="tab" onclick="switchTab('painel')">Painel Geral</button>
+    <div class="navbar-update">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8c97a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="update-time"></span>
+    </div>
   </div>
+</div>
+
+<div class="container">
+
+  <!-- TAB: CONSULTA -->
   <div id="tab-consulta" class="section active">
     <div class="card">
-      <h2>Buscar lotes</h2>
-      <p class="sub">Cole os lotes em qualquer formato</p>
+      <div class="card-header">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>Buscar lotes</span>
+      </div>
       <div class="filter-row">
-        <div class="filter-group" style="flex:1;min-width:200px">
+        <div class="filter-group">
           <label>Lotes (um por linha)</label>
           <textarea id="lote-input" rows="4" placeholder="Ex: 1250"></textarea>
         </div>
         <div class="filter-group">
-          <label>Pais (SITE)</label>
-          <select id="filtro-pais-consulta"><option value="">Todos os paises</option></select>
+          <label>País (SITE)</label>
+          <select id="filtro-pais-consulta"><option value="">Todos os países</option></select>
         </div>
         <div class="filter-group">
-          <label>Mes/Ano</label>
+          <label>Período</label>
           <div class="multi-select-wrap" id="mesano-wrap">
             <div class="multi-select-trigger" onclick="toggleMesAnoDropdown()" id="mesano-trigger">Todos os meses</div>
             <div class="multi-select-dropdown" id="mesano-dropdown" style="display:none">
@@ -130,40 +227,51 @@ tr:hover td{background:#f8f9fa}
       <div class="action-row">
         <button class="btn" id="btn-buscar" onclick="buscarLotes()">Buscar</button>
         <button class="btn-outline" id="btn-exportar" onclick="exportarCSV()" style="display:none">Exportar CSV</button>
-        <button class="btn-outline" onclick="limparConsulta()">Limpar</button>
+        <button class="btn-ghost" onclick="limparConsulta()">Limpar</button>
       </div>
     </div>
     <div id="consulta-result"></div>
   </div>
+
+  <!-- TAB: CONCILIACAO -->
   <div id="tab-contab" class="section">
     <div class="card">
-      <h2>Conciliacao SAP Revenue</h2>
-      <p class="sub">Cole os lotes e valores DIF da contabilidade</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div>
-          <label style="font-size:12px;color:#5f6368;font-weight:500;display:block;margin-bottom:5px">Lotes</label>
+      <div class="card-header">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>Conciliação SAP Revenue</span>
+      </div>
+      <p class="card-sub">Cole os lotes e valores DIF da contabilidade</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="filter-group">
+          <label>Lotes</label>
           <textarea id="contab-lotes" rows="8" placeholder="1250"></textarea>
         </div>
-        <div>
-          <label style="font-size:12px;color:#5f6368;font-weight:500;display:block;margin-bottom:5px">Valor DIF contabilidade</label>
+        <div class="filter-group">
+          <label>Valor DIF contabilidade</label>
           <textarea id="contab-valores" rows="8" placeholder="1500,00"></textarea>
         </div>
       </div>
       <div class="action-row">
         <button class="btn" id="btn-conciliar" onclick="conciliar()">Conciliar</button>
-        <button class="btn-outline" onclick="document.getElementById('contab-lotes').value='';document.getElementById('contab-valores').value='';document.getElementById('contab-result').innerHTML=''">Limpar</button>
+        <button class="btn-ghost" onclick="document.getElementById('contab-lotes').value='';document.getElementById('contab-valores').value='';document.getElementById('contab-result').innerHTML=''">Limpar</button>
       </div>
     </div>
     <div id="contab-result"></div>
   </div>
+
+  <!-- TAB: PAINEL -->
   <div id="tab-painel" class="section">
     <div class="card">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-        <input type="text" id="filtro-txt" placeholder="Filtrar..." style="flex:1;min-width:180px;font-size:13px" oninput="aplicarFiltros()">
-        <select id="filtro-status" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os status</option></select>
-        <select id="filtro-site" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os sites</option></select>
-        <select id="filtro-mes" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os meses</option></select>
-        <select id="filtro-ano" onchange="aplicarFiltros()" style="font-size:13px"><option value="">Todos os anos</option></select>
+      <div class="card-header">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Painel Geral</span>
+      </div>
+      <div class="painel-filters">
+        <input type="text" id="filtro-txt" placeholder="Filtrar..." oninput="aplicarFiltros()">
+        <select id="filtro-status" onchange="aplicarFiltros()"><option value="">Todos os status</option></select>
+        <select id="filtro-site" onchange="aplicarFiltros()"><option value="">Todos os sites</option></select>
+        <select id="filtro-mes" onchange="aplicarFiltros()"><option value="">Todos os meses</option></select>
+        <select id="filtro-ano" onchange="aplicarFiltros()"><option value="">Todos os anos</option></select>
         <button class="btn" style="margin:0" onclick="carregarPainel()">Atualizar</button>
         <button class="btn-outline" id="btn-exportar-painel" style="display:none" onclick="exportarCSVPainel()">Exportar CSV</button>
       </div>
@@ -172,53 +280,94 @@ tr:hover td{background:#f8f9fa}
     <div id="cards-resumo"></div>
     <div id="painel-result"></div>
   </div>
-</div>
-<div class="footer-label">Mercado Livre - Team Controlling</div>
-<script>
-const WEBHOOK_URL = 'https://web.furycloud.io/api/proxy/verdi_flows/webhook-test/d784002a-a398-4c62-8b85-105050404865';
-var todosLotes = [], filtrados = [], _ultimaConsulta = null;
 
-async function fetchDados() {
-  const r = await fetch(WEBHOOK_URL, {mode:'cors'});
-  if (!r.ok) throw new Error('Erro ao acessar dados: ' + r.status);
-  const data = await r.json();
-  return data.map(item => {
-    const obj = {};
-    Object.keys(item).forEach(k => {
-      let val = String(item[k] || '').trim();
-      const ku = k.toUpperCase();
-      if (ku.includes('FECHA') || ku.includes('MES') || ku.includes('DATE')) val = formatarData(val);
-      obj[ku] = val;
+  <!-- FOOTER TÉCNICO -->
+  <div class="footer-tech">
+    <div class="footer-left">
+      <span>CIERRE_DATAFLOW · v2.1.0</span>
+      <span id="footer-registros">— registros carregados</span>
+    </div>
+    <div class="footer-right">
+      <span id="footer-session">SESSION: —</span>
+      <span id="footer-time">—</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const WEBHOOK_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vQVWGqxfMEUgPWM_ZVXfUmflkRWdNQtGryVL7lbSfEZLBs-Evu7xGs_HBOyX9pBVSiK6croObIzsJQk/pub?output=csv';
+const CACHE_TTL=3600000;
+var todosLotes=[],filtrados=[],_ultimaConsulta=null;
+var _cacheData=null,_cacheTime=null;
+
+function gerarSession(){const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';let s='';for(let i=0;i<4;i++)s+=c.charAt(Math.floor(Math.random()*c.length));s+='-';for(let i=0;i<4;i++)s+=c.charAt(Math.floor(Math.random()*c.length));return s;}
+const SESSION_ID=gerarSession();
+
+function atualizarFooter(){
+  const now=new Date();
+  document.getElementById('footer-time').textContent=now.toLocaleDateString('pt-BR')+' · '+now.toLocaleTimeString('pt-BR');
+  document.getElementById('footer-session').textContent='SESSION: '+SESSION_ID;
+  if(todosLotes.length) document.getElementById('footer-registros').textContent=todosLotes.length.toLocaleString('pt-BR')+' registros carregados';
+}
+
+async function fetchDados(){
+  const agora=Date.now();
+  if(_cacheData && _cacheTime && (agora-_cacheTime)<CACHE_TTL){
+    return _cacheData;
+  }
+  const r=await fetch(WEBHOOK_URL);
+  if(!r.ok) throw new Error('Erro ao acessar dados: '+r.status);
+  const texto=await r.text();
+  if(!texto||texto.trim()==='') throw new Error('Dados retornaram vazios');
+  const linhas=texto.split('\n').filter(l=>l.trim());
+  const headers=linhas[0].split(',').map(h=>h.trim().replace(/^"|"$/g,'').toUpperCase());
+  const processado=linhas.slice(1).map(linha=>{
+    const valores=linha.match(/(".*?"|[^,]+)(?=,|$)/g)||[];
+    const obj={};
+    headers.forEach((h,i)=>{
+      let val=(valores[i]||'').trim().replace(/^"|"$/g,'');
+      if(h.includes('FECHA')||h.includes('MES')||h.includes('DATE')) val=formatarData(val);
+      obj[h]=val;
     });
     return obj;
   });
+  _cacheData=processado;
+  _cacheTime=agora;
+  return processado;
 }
 
-function formatarData(s) {
-  if (!s) return '';
-  const d = new Date(s);
-  if (!isNaN(d.getTime())) { const m = d.getMonth()+1; return (m<10?'0'+m:m)+'/'+d.getFullYear(); }
-  const r1 = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (r1) return r1[2].padStart(2,'0')+'/'+r1[3];
-  const r2 = s.match(/^(\d{1,2})[\/\-](\d{4})$/);
-  if (r2) return r2[1].padStart(2,'0')+'/'+r2[2];
+function formatarData(s){
+  if(!s) return '';
+  const d=new Date(s);
+  if(!isNaN(d.getTime())){const m=d.getMonth()+1;return(m<10?'0'+m:m)+'/'+d.getFullYear();}
+  const r1=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if(r1) return r1[2].padStart(2,'0')+'/'+r1[3];
+  const r2=s.match(/^(\d{1,2})[\/\-](\d{4})$/);
+  if(r2) return r2[1].padStart(2,'0')+'/'+r2[2];
   return s;
 }
 
-function parseLotes(raw) { return raw.split(/[\n\r,;|\t]+/).map(l=>l.trim()).filter(Boolean); }
-function parseValor(v) { if (!v||v==='') return 0; const n=parseFloat(String(v).replace(/[^0-9,.\-]/g,'').replace(',','.')); return isNaN(n)?0:n; }
-function formatValor(n) { return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function parseLotes(raw){return raw.split(/[\n\r,;|\t]+/).map(l=>l.trim()).filter(Boolean);}
+function parseValor(v){if(!v||v==='') return 0;const n=parseFloat(String(v).replace(/[^0-9,.\-]/g,'').replace(',','.'));return isNaN(n)?0:n;}
+function formatValor(n){return n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-function switchTab(name) {
+function atualizarHora(){
+  const t='Atualizado: '+new Date().toLocaleString('pt-BR');
+  document.getElementById('update-time').textContent=t;
+  atualizarFooter();
+}
+
+function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   const idx=['consulta','contab','painel'].indexOf(name);
   document.querySelectorAll('.tab')[idx].classList.add('active');
   document.getElementById('tab-'+name).classList.add('active');
-  if (name==='painel' && todosLotes.length===0) carregarPainel();
+  if(name==='painel'&&todosLotes.length===0) carregarPainel();
 }
 
-function limparConsulta() {
+function limparConsulta(){
   document.getElementById('lote-input').value='';
   document.getElementById('filtro-pais-consulta').value='';
   limparMeses();
@@ -227,24 +376,22 @@ function limparConsulta() {
   _ultimaConsulta=null;
 }
 
-function toggleMesAnoDropdown() {
+function toggleMesAnoDropdown(){
   const dd=document.getElementById('mesano-dropdown');
   dd.style.display=dd.style.display==='none'?'block':'none';
 }
-
 document.addEventListener('click',e=>{
   const wrap=document.getElementById('mesano-wrap');
   if(wrap&&!wrap.contains(e.target)) document.getElementById('mesano-dropdown').style.display='none';
 });
+function getMesesSelecionados(){return Array.from(document.querySelectorAll('#mesano-options input:checked')).map(cb=>cb.value);}
+function atualizarMesAnoBadge(){const sel=getMesesSelecionados();document.getElementById('mesano-trigger').textContent=sel.length===0?'Todos os meses':sel.length+' meses';}
+function selecionarTodosMeses(){document.querySelectorAll('#mesano-options input').forEach(cb=>cb.checked=true);atualizarMesAnoBadge();}
+function limparMeses(){document.querySelectorAll('#mesano-options input').forEach(cb=>cb.checked=false);atualizarMesAnoBadge();}
 
-function getMesesSelecionados() { return Array.from(document.querySelectorAll('#mesano-options input:checked')).map(cb=>cb.value); }
-function atualizarMesAnoBadge() { const sel=getMesesSelecionados(); const trigger=document.getElementById('mesano-trigger'); trigger.textContent=sel.length===0?'Todos os meses':sel.length+' meses'; }
-function selecionarTodosMeses() { document.querySelectorAll('#mesano-options input').forEach(cb=>cb.checked=true); atualizarMesAnoBadge(); }
-function limparMeses() { document.querySelectorAll('#mesano-options input').forEach(cb=>cb.checked=false); atualizarMesAnoBadge(); }
-
-async function buscarLotes() {
+async function buscarLotes(){
   const raw=document.getElementById('lote-input').value.trim();
-  if (!raw) { alert('Digite ao menos um lote.'); return; }
+  if(!raw){alert('Digite ao menos um lote.');return;}
   const lotes=parseLotes(raw);
   document.getElementById('lote-input').value=lotes.join('\n');
   const site=document.getElementById('filtro-pais-consulta').value;
@@ -252,8 +399,8 @@ async function buscarLotes() {
   const el=document.getElementById('consulta-result');
   el.innerHTML='<div class="loading"><span class="spin"></span> Carregando dados...</div>';
   document.getElementById('btn-buscar').disabled=true;
-  try {
-    if (todosLotes.length===0) todosLotes=await fetchDados();
+  try{
+    if(todosLotes.length===0) todosLotes=await fetchDados();
     const encontrados=[],naoEncontrados=[];
     lotes.forEach(lote=>{
       const lu=lote.toUpperCase().trim();
@@ -267,40 +414,39 @@ async function buscarLotes() {
       else naoEncontrados.push(lote);
     });
     renderConsulta({encontrados,naoEncontrados},el);
-    document.getElementById('update-time').textContent='Atualizado: '+new Date().toLocaleString('pt-BR');
-  } catch(e) {
-    el.innerHTML='<div class="alert alert-err">Erro: '+e.message+'</div>';
-  }
+    atualizarHora();
+  }catch(e){el.innerHTML='<div class="alert-err">Erro: '+e.message+'</div>';}
   document.getElementById('btn-buscar').disabled=false;
 }
 
-function renderConsulta(res,el) {
+function renderConsulta(res,el){
   const enc=res.encontrados.length,nao=res.naoEncontrados.length;
-  let html=`<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} nao encontrado(s)</div></div>`;
+  let html=`<div class="counter-row"><div class="counter counter-g"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter counter-r"><span class="dot dot-r"></span>${nao} não encontrado(s)</div></div>`;
   if(enc>0){
     let totalFaturado=0,totalLotes=0,totalPecas=0;
     res.encontrados.forEach(item=>{totalLotes++;item.registros.forEach(r=>{totalFaturado+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);totalPecas+=parseValor(r['CANTIDAD']);});});
-    html+=`<div class="cards-resumo" style="margin-bottom:20px"><div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${totalLotes}</div></div><div class="card-metric"><div class="card-metric-label">Total faturado</div><div class="card-metric-value">${formatValor(totalFaturado)}</div></div><div class="card-metric amber"><div class="card-metric-label">Total de pecas</div><div class="card-metric-value">${totalPecas.toLocaleString('pt-BR')}</div></div></div>`;
+    html+=`<div class="cards-resumo"><div class="card-metric"><div class="card-metric-label"><span class="card-metric-dot" style="background:#36b37e"></span>Total de lotes</div><div class="card-metric-value">${totalLotes}</div></div><div class="card-metric"><div class="card-metric-label"><span class="card-metric-dot" style="background:#1a3a5c"></span>Total faturado</div><div class="card-metric-value">${formatValor(totalFaturado)}</div></div><div class="card-metric"><div class="card-metric-label"><span class="card-metric-dot" style="background:#ff8b00"></span>Total de peças</div><div class="card-metric-value">${totalPecas.toLocaleString('pt-BR')}</div></div></div>`;
   }
   res.encontrados.forEach(item=>{
-    html+=`<div class="lote-block"><div class="lote-header found">Lote ${item.lote} <span class="badge badge-ok">${item.registros.length} registro(s)</span>${item.registros[0]&&item.registros[0]['SITE']?` <span class="badge-site">${item.registros[0]['SITE']}</span>`:''}</div>`;
+    const status=item.registros[0]&&item.registros[0]['STATUS']?item.registros[0]['STATUS']:'';
+    html+=`<div class="lote-block"><div class="lote-header found"><span class="lote-header-name">Lote ${item.lote}</span><span class="badge badge-ok">${item.registros.length} registro(s)</span>${item.registros[0]&&item.registros[0]['SITE']?`<span class="badge badge-site">${item.registros[0]['SITE']}</span>`:''}<span class="lote-status">${status}</span></div>`;
     item.registros.forEach((r,i)=>{
-      if(i>0) html+='<hr style="border:none;border-top:1px solid #f1f3f4">';
+      if(i>0) html+='<hr style="border:none;border-top:1px solid #f1f5f9">';
       html+='<div class="lote-fields">';
-      [['SITE','Pais'],['WAREHOUSE','Warehouse'],['FECHA_DE_REGISTRO','Data registro'],['AREA','Area'],['PROCESO','Processo'],['SUBPROCESO','Subprocesso'],['STATUS','Status'],['TYPE_SELLER','Tipo vendedor'],['SALIDA_COLECTA','Saida coleta'],['MES_COLECTA','Mes coleta'],['RECUPERO_EN_MONEDA_LOCAL','Recupero moeda local'],['TIPO_DE_RETIRO','Tipo retiro'],['CANTIDAD','Total de pecas']].forEach(([k,l])=>{
+      [['SITE','País'],['WAREHOUSE','Warehouse'],['FECHA_DE_REGISTRO','Data registro'],['AREA','Área'],['PROCESO','Processo'],['SUBPROCESO','Subprocesso'],['STATUS','Status'],['TYPE_SELLER','Tipo vendedor'],['SALIDA_COLECTA','Saída coleta'],['MES_COLECTA','Mês coleta'],['RECUPERO_EN_MONEDA_LOCAL','Recupero moeda local'],['TIPO_DE_RETIRO','Tipo retiro'],['CANTIDAD','Total de peças']].forEach(([k,l])=>{
         if(r[k]) html+=`<div class="field-item"><span class="field-label">${l}</span><span class="field-value">${r[k]}</span></div>`;
       });
       html+='</div>';
     });
     html+='</div>';
   });
-  res.naoEncontrados.forEach(lote=>{html+=`<div class="lote-block"><div class="lote-header notfound">Lote ${lote} <span class="badge badge-err">Nao encontrado</span></div></div>`;});
+  res.naoEncontrados.forEach(lote=>{html+=`<div class="lote-block"><div class="lote-header notfound"><span class="lote-header-name">Lote ${lote}</span><span class="badge badge-err">Não encontrado</span></div></div>`;});
   el.innerHTML=html;
   _ultimaConsulta=res;
   document.getElementById('btn-exportar').style.display=res.encontrados.length?'inline-flex':'none';
 }
 
-function exportarCSV() {
+function exportarCSV(){
   if(!_ultimaConsulta||!_ultimaConsulta.encontrados.length) return;
   const cols=['LOTE','SITE','WAREHOUSE','FECHA_DE_REGISTRO','AREA','PROCESO','SUBPROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL','TIPO_DE_RETIRO','CANTIDAD'];
   const labels=['Lote','Pais','Warehouse','Data registro','Area','Processo','Subprocesso','Status','Tipo vendedor','Saida coleta','Mes coleta','Recupero moeda local','Tipo retiro','Total pecas'];
@@ -311,7 +457,7 @@ function exportarCSV() {
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
-async function conciliar() {
+async function conciliar(){
   const rawLotes=document.getElementById('contab-lotes').value.trim();
   const rawValores=document.getElementById('contab-valores').value.trim();
   if(!rawLotes){alert('Cole ao menos um lote.');return;}
@@ -320,7 +466,7 @@ async function conciliar() {
   const el=document.getElementById('contab-result');
   el.innerHTML='<div class="loading"><span class="spin"></span> Carregando dados...</div>';
   document.getElementById('btn-conciliar').disabled=true;
-  try {
+  try{
     if(todosLotes.length===0) todosLotes=await fetchDados();
     const resultados=lotes.map((lote,idx)=>{
       const lu=lote.toUpperCase().trim();
@@ -332,38 +478,34 @@ async function conciliar() {
     });
     const enc=resultados.filter(r=>r.encontrado).length;
     const nao=resultados.filter(r=>!r.encontrado).length;
-    let html=`<div class="counter-row"><div class="counter"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter"><span class="dot dot-r"></span>${nao} divergencia(s)</div></div>`;
+    let html=`<div class="counter-row"><div class="counter counter-g"><span class="dot dot-g"></span>${enc} encontrado(s)</div><div class="counter counter-r"><span class="dot dot-r"></span>${nao} divergência(s)</div></div>`;
     html+=`<div class="tbl-wrap"><table><thead><tr><th>Lote</th><th>DIF Contab.</th><th>Recupero Layout</th><th>DIF Layout</th><th>Recupero Dash</th><th>DIF Dash</th></tr></thead><tbody>`;
     resultados.forEach(r=>{
-      const difCor=r.difLayout>=0?'color:#137333;font-weight:600':'color:#c5221f;font-weight:600';
-      html+=`<tr><td><b>${r.lote}</b></td><td>${formatValor(r.difContab)}</td><td>${r.encontrado?formatValor(r.recuperoLayout):'<span style="color:#c5221f">Nao encontrado</span>'}</td><td style="${difCor}">${r.encontrado?formatValor(r.difLayout):'—'}</td><td style="color:#9aa0a6;font-size:11px">aguard. BigQuery</td><td style="color:#9aa0a6">—</td></tr>`;
+      const difCor=r.difLayout>=0?'color:#00875a;font-weight:600':'color:#de350b;font-weight:600';
+      html+=`<tr><td><b>${r.lote}</b></td><td>${formatValor(r.difContab)}</td><td>${r.encontrado?formatValor(r.recuperoLayout):'<span style="color:#de350b">Não encontrado</span>'}</td><td style="${difCor}">${r.encontrado?formatValor(r.difLayout):'—'}</td><td style="color:#b0bac6;font-size:11px">aguard. BigQuery</td><td style="color:#b0bac6">—</td></tr>`;
     });
     html+='</tbody></table></div>';
     el.innerHTML=html;
-    document.getElementById('update-time').textContent='Atualizado: '+new Date().toLocaleString('pt-BR');
-  } catch(e) {
-    el.innerHTML='<div class="alert alert-err">Erro: '+e.message+'</div>';
-  }
+    atualizarHora();
+  }catch(e){el.innerHTML='<div class="alert-err">Erro: '+e.message+'</div>';}
   document.getElementById('btn-conciliar').disabled=false;
 }
 
-async function carregarPainel() {
+async function carregarPainel(){
   const el=document.getElementById('painel-result');
   el.innerHTML='<div class="loading"><span class="spin"></span> Carregando todos os lotes...</div>';
   document.getElementById('counter-row').innerHTML='';
-  try {
+  try{
     todosLotes=await fetchDados();
-    document.getElementById('update-time').textContent='Atualizado: '+new Date().toLocaleString('pt-BR');
+    atualizarHora();
     popularFiltros();
     filtrados=[...todosLotes];
     renderPainel(el);
     renderCounters();
-  } catch(e) {
-    el.innerHTML='<div class="alert alert-err">Erro: '+e.message+'</div>';
-  }
+  }catch(e){el.innerHTML='<div class="alert-err">Erro: '+e.message+'</div>';}
 }
 
-function popularFiltros() {
+function popularFiltros(){
   const statuses=[...new Set(todosLotes.map(r=>r['STATUS']).filter(Boolean))].sort();
   const sites=[...new Set(todosLotes.map(r=>r['SITE']).filter(Boolean))].sort();
   const meses=[...new Set(todosLotes.map(r=>{const p=(r['MES_COLECTA']||'').split('/');return p.length===2?p[0]:'';}).filter(Boolean))].sort();
@@ -374,7 +516,7 @@ function popularFiltros() {
   document.getElementById('filtro-mes').innerHTML='<option value="">Todos os meses</option>'+meses.map(m=>`<option value="${m}">${m} - ${nomeMes[parseInt(m,10)]||m}</option>`).join('');
   document.getElementById('filtro-ano').innerHTML='<option value="">Todos os anos</option>'+anos.map(a=>`<option>${a}</option>`).join('');
   const selSite=document.getElementById('filtro-pais-consulta');
-  selSite.innerHTML='<option value="">Todos os paises</option>'+sites.map(s=>`<option>${s}</option>`).join('');
+  selSite.innerHTML='<option value="">Todos os países</option>'+sites.map(s=>`<option>${s}</option>`).join('');
   const mesanos=[...new Set(todosLotes.map(r=>r['MES_COLECTA']).filter(Boolean))].sort().reverse();
   const container=document.getElementById('mesano-options');
   container.innerHTML='';
@@ -383,9 +525,10 @@ function popularFiltros() {
     div.innerHTML=`<input type="checkbox" value="${m}" onchange="atualizarMesAnoBadge()"> ${m}`;
     container.appendChild(div);
   });
+  document.getElementById('footer-registros').textContent=todosLotes.length.toLocaleString('pt-BR')+' registros carregados';
 }
 
-function aplicarFiltros() {
+function aplicarFiltros(){
   const txt=document.getElementById('filtro-txt').value.toLowerCase();
   const status=document.getElementById('filtro-status').value;
   const site=document.getElementById('filtro-site').value;
@@ -404,11 +547,11 @@ function aplicarFiltros() {
   renderCounters();
 }
 
-function renderCounters() {
-  document.getElementById('counter-row').innerHTML=`<div class="counter"><span class="dot dot-b"></span>${filtrados.length} exibidos</div><div class="counter"><span class="dot dot-g"></span>${todosLotes.length} total</div>`;
+function renderCounters(){
+  document.getElementById('counter-row').innerHTML=`<div class="counter counter-b"><span class="dot dot-b"></span>${filtrados.length} exibidos</div><div class="counter counter-g"><span class="dot dot-g"></span>${todosLotes.length} total</div>`;
 }
 
-function renderCards() {
+function renderCards(){
   const el=document.getElementById('cards-resumo');
   if(!filtrados.length){el.innerHTML='';return;}
   const totalRecupero=filtrados.reduce((acc,r)=>acc+parseValor(r['RECUPERO_EN_MONEDA_LOCAL']),0);
@@ -417,8 +560,8 @@ function renderCards() {
     const s=r['SITE']||'—';if(!porSite[s])porSite[s]={lotes:0,recupero:0};porSite[s].lotes++;porSite[s].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
     const st=r['STATUS']||'—';if(!porStatus[st])porStatus[st]={lotes:0,recupero:0};porStatus[st].lotes++;porStatus[st].recupero+=parseValor(r['RECUPERO_EN_MONEDA_LOCAL']);
   });
-  let html=`<div class="cards-resumo"><div class="card-metric green"><div class="card-metric-label">Total de lotes</div><div class="card-metric-value">${filtrados.length}</div></div><div class="card-metric"><div class="card-metric-label">Recupero moeda local</div><div class="card-metric-value">${formatValor(totalRecupero)}</div></div></div><div class="breakdown-row">`;
-  html+='<div class="breakdown-card"><h3>Recupero por Pais</h3>';
+  let html=`<div class="cards-resumo"><div class="card-metric"><div class="card-metric-label"><span class="card-metric-dot" style="background:#36b37e"></span>Total de lotes</div><div class="card-metric-value">${filtrados.length}</div></div><div class="card-metric"><div class="card-metric-label"><span class="card-metric-dot" style="background:#1a3a5c"></span>Recupero moeda local</div><div class="card-metric-value">${formatValor(totalRecupero)}</div></div></div><div class="breakdown-row">`;
+  html+='<div class="breakdown-card"><h3>Recupero por País</h3>';
   Object.keys(porSite).sort().forEach(s=>{html+=`<div class="breakdown-item"><span>${s} (${porSite[s].lotes})</span><b>${formatValor(porSite[s].recupero)}</b></div>`;});
   html+='</div><div class="breakdown-card"><h3>Recupero por Status</h3>';
   Object.keys(porStatus).sort().forEach(s=>{html+=`<div class="breakdown-item"><span>${s} (${porStatus[s].lotes})</span><b>${formatValor(porStatus[s].recupero)}</b></div>`;});
@@ -426,19 +569,19 @@ function renderCards() {
   el.innerHTML=html;
 }
 
-function renderPainel(el) {
+function renderPainel(el){
   if(!filtrados.length){el.innerHTML='<div class="empty">Nenhum lote encontrado.</div>';document.getElementById('cards-resumo').innerHTML='';document.getElementById('btn-exportar-painel').style.display='none';return;}
   renderCards();
   const cols=['LOTE','SITE','WAREHOUSE','AREA','PROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL'];
-  const labels=['Lote','Pais','Warehouse','Area','Processo','Status','Tipo vendedor','Saida coleta','Mes coleta','Recupero moeda local'];
+  const labels=['Lote','País','Warehouse','Área','Processo','Status','Tipo vendedor','Saída coleta','Mês coleta','Recupero moeda local'];
   let html=`<div class="tbl-wrap"><table><thead><tr>${cols.map((c,i)=>`<th>${labels[i]}</th>`).join('')}</tr></thead><tbody>`;
   filtrados.forEach(r=>{html+=`<tr>${cols.map(c=>`<td>${r[c]||'—'}</td>`).join('')}</tr>`;});
-  html+=`</tbody></table></div><div style="font-size:12px;color:#5f6368;margin-top:8px">${filtrados.length} registro(s)</div>`;
+  html+=`</tbody></table></div><div style="font-size:12px;color:#8c97a8;margin-top:8px">${filtrados.length} registro(s)</div>`;
   el.innerHTML=html;
   document.getElementById('btn-exportar-painel').style.display='inline-flex';
 }
 
-function exportarCSVPainel() {
+function exportarCSVPainel(){
   if(!filtrados.length) return;
   const cols=['LOTE','SITE','WAREHOUSE','AREA','PROCESO','STATUS','TYPE_SELLER','SALIDA_COLECTA','MES_COLECTA','RECUPERO_EN_MONEDA_LOCAL'];
   const labels=['Lote','Pais','Warehouse','Area','Processo','Status','Tipo vendedor','Saida coleta','Mes coleta','Recupero moeda local'];
@@ -450,11 +593,13 @@ function exportarCSVPainel() {
 }
 
 window.onload=async function(){
-  try {
+  atualizarFooter();
+  setInterval(atualizarFooter,60000);
+  try{
     todosLotes=await fetchDados();
     popularFiltros();
-    document.getElementById('update-time').textContent='Atualizado: '+new Date().toLocaleString('pt-BR');
-  } catch(e){console.log('Erro ao pre-carregar:',e);}
+    atualizarHora();
+  }catch(e){console.log('Erro ao pre-carregar:',e);}
 };
 </script>
 </body>
